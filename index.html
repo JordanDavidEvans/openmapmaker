@@ -3,123 +3,121 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Open Map Maker</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+    <title>Map Builder</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"
+    />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <header>
-      <div>
-        <h1>Open Map Maker</h1>
-        <div class="badges">
-          <span class="badge">Leaflet + Draw</span>
-          <span class="badge">Drag &amp; Drop shapes</span>
-          <span class="badge">Embeddable HTML</span>
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">MB</div>
+        <div>
+          <h1>Map Builder</h1>
+          <p>Create and share custom maps in minutes.</p>
         </div>
       </div>
-      <div class="pill">
-        <span>Drop tools on the map or use the drawing toolbar</span>
+      <div class="actions">
+        <button id="newMap">New Map</button>
+        <label class="file-btn">
+          Load Map
+          <input type="file" id="loadMap" accept="application/json" />
+        </label>
+        <button id="saveMap" class="ghost">Save to File</button>
+        <button id="generateEmbed" class="primary">Generate Embed Code</button>
       </div>
     </header>
 
     <div class="layout">
-      <aside class="panel">
-        <h2>Builder</h2>
-        <small>Customize tiles, colors, interactions, and default zoom.</small>
-        <div class="chip-row">
-          <span class="chip">Create: Simple · Advanced · Service area</span>
-          <span class="chip">Draw: Circles · Polygons · Rectangles · Markers</span>
-        </div>
+      <aside class="sidebar">
+        <section>
+          <h2>Map details</h2>
+          <label>Title</label>
+          <input id="mapTitle" type="text" placeholder="Untitled map" />
+          <label>Description</label>
+          <textarea id="mapDescription" rows="3" placeholder="What is this map about?"></textarea>
+        </section>
 
-        <label for="mapStyle">Map style</label>
-        <select id="mapStyle">
-          <option value="simple">Simple map maker</option>
-          <option value="advanced">Advanced map maker</option>
-          <option value="service">Service area map</option>
-        </select>
-
-        <div class="controls-grid" style="margin-top: 10px;">
-          <div>
-            <label for="centerLat">Center latitude</label>
-            <input type="number" step="0.0001" id="centerLat" value="37.7749" />
+        <section>
+          <h2>View</h2>
+          <div class="grid two">
+            <div>
+              <label>Center lat</label>
+              <input id="centerLat" type="number" step="0.0001" />
+            </div>
+            <div>
+              <label>Center lng</label>
+              <input id="centerLng" type="number" step="0.0001" />
+            </div>
           </div>
-          <div>
-            <label for="centerLng">Center longitude</label>
-            <input type="number" step="0.0001" id="centerLng" value="-122.4194" />
+          <label>Zoom</label>
+          <input id="zoom" type="number" min="1" max="19" />
+          <label>Base map</label>
+          <select id="baseLayer">
+            <option value="streets">Streets</option>
+            <option value="terrain">Terrain</option>
+            <option value="toner">Grayscale</option>
+          </select>
+        </section>
+
+        <section>
+          <h2>Layers</h2>
+          <div id="layerList" class="layer-list empty">
+            <p>No layers yet. Add one from the toolbar.</p>
           </div>
-        </div>
-
-        <label for="zoom" style="margin-top: 10px;">Zoom (4–18)</label>
-        <input type="range" min="4" max="18" value="12" id="zoom" />
-
-        <div class="controls-grid" style="margin-top: 10px;">
-          <div>
-            <label for="accent">Accent color</label>
-            <input type="color" id="accent" value="#34d399" />
-          </div>
-          <div>
-            <label for="radius">Default radius (m)</label>
-            <input type="number" id="radius" value="500" min="50" step="25" />
-          </div>
-        </div>
-
-        <div class="controls-grid" style="margin-top: 10px;">
-          <div>
-            <label for="fill">Fill opacity</label>
-            <input type="range" id="fill" min="0.1" max="0.9" value="0.35" step="0.05" />
-          </div>
-          <div>
-            <label for="stroke">Stroke weight</label>
-            <input type="number" id="stroke" value="2" min="1" max="8" />
-          </div>
-        </div>
-
-        <label for="description" style="margin-top: 10px;">Optional tooltip text</label>
-        <input type="text" id="description" placeholder="E.g. Headquarters" />
-
-        <div class="chip-row">
-          <span class="chip">Drag tools to the map</span>
-          <span class="chip">or click shapes in the Leaflet toolbar</span>
-        </div>
-
-        <div class="palette">
-          <div class="palette-item" draggable="true" data-type="marker">Multiple Locations</div>
-          <div class="palette-item" draggable="true" data-type="circle">Radius &amp; Circles</div>
-          <div class="palette-item" draggable="true" data-type="polygon">Polygons</div>
-          <div class="palette-item" draggable="true" data-type="rectangle">Rectangles</div>
-        </div>
-
-        <div class="helper">Drag &amp; drop onto the map. You can also edit features via the Leaflet draw toolbar.</div>
-
-        <div style="display: flex; gap: 8px; margin-top: 12px;">
-          <button id="reset" class="secondary" type="button">Clear map</button>
-          <button id="update" type="button">Update embed</button>
-        </div>
+        </section>
       </aside>
 
-      <main class="panel map-wrapper">
+      <main class="map-area">
         <div id="map"></div>
-        <div class="map-legend">
-          <strong>Quick tips</strong>
-          <span>Drag tiles from palette → drop on map</span>
-          <span>Use toolbar to draw/edit/delete</span>
-          <span>Embed snippet updates automatically</span>
+        <div class="floating-toolbar">
+          <button data-tool="marker">Add Marker</button>
+          <button data-tool="polygon">Draw Polygon</button>
+          <button data-tool="rectangle">Draw Rectangle</button>
+          <button data-tool="circle">Draw Circle</button>
+          <button data-tool="polyline">Draw Polyline</button>
+          <button data-tool="edit">Select / Edit</button>
         </div>
       </main>
     </div>
 
-    <section class="panel">
-      <h2>Embed code</h2>
-      <small>Copy into custom HTML widgets on platforms like Duda, Squarespace, or Webflow.</small>
-      <textarea id="embed"></textarea>
-      <div style="display: flex; gap: 8px; margin-top: 10px;">
-        <button id="copy" type="button">Copy embed code</button>
-        <button id="download" class="secondary" type="button">Download HTML</button>
+    <div id="modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="modalTitle">Edit layer</h3>
+          <button id="closeModal" class="icon-btn" aria-label="Close">×</button>
+        </div>
+        <form id="layerForm" class="form"></form>
       </div>
-    </section>
+    </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <div id="embedModal" class="modal hidden">
+      <div class="modal-content wide">
+        <div class="modal-header">
+          <h3>Embed snippet</h3>
+          <button id="closeEmbed" class="icon-btn" aria-label="Close">×</button>
+        </div>
+        <p>Copy and paste this HTML into your site. It is fully self-contained.</p>
+        <textarea id="embedOutput" readonly></textarea>
+        <div class="modal-actions">
+          <button id="copyEmbed">Copy to Clipboard</button>
+        </div>
+      </div>
+    </div>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
     <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
     <script src="app.js"></script>
   </body>
