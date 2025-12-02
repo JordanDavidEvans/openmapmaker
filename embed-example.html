@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Embed Example</title>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, sans-serif;
+        background: #f8fafc;
+        margin: 0;
+        padding: 24px;
+      }
+      pre {
+        background: #0f172a;
+        color: #e2e8f0;
+        padding: 16px;
+        border-radius: 12px;
+        overflow: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>How to use the embed snippet</h1>
+    <p>
+      Paste the generated HTML into any static page or CMS widget. The snippet already loads Leaflet
+      from a CDN and recreates all markers and shapes.
+    </p>
+    <pre>&lt;!-- Example output --&gt;
+&lt;div id="map-123" style="width:100%;height:420px;border:1px solid #e2e8f0;border-radius:12px;"&gt;&lt;/div&gt;
+&lt;link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" /&gt;
+&lt;script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""&gt;&lt;/script&gt;
+&lt;script&gt;
+  const mapConfig = { ...exported data... };
+  // map initialisation goes here
+&lt;/script&gt;</pre>
+  </body>
+</html>
