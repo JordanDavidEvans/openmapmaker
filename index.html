@@ -1,0 +1,670 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Open Map Maker</title>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-sA+e2atLYYv3gL5od7WfYz9WqE7lKFIp2nd5o6qH6Lk="
+    crossorigin=""
+  />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"
+    integrity="sha256-tnXbIJVt9Js6y9WEyTb6t6bwyqH4agVuW1HsJ5AaIVI="
+    crossorigin=""
+  />
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --border: #1f2937;
+      --accent: #34d399;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: radial-gradient(circle at 10% 20%, #1f2937, #0b1020 45%);
+      color: var(--text);
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      padding: 24px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 32px;
+      letter-spacing: -0.5px;
+    }
+
+    .pill {
+      border: 1px solid var(--border);
+      background: #0b1326;
+      padding: 10px 14px;
+      border-radius: 999px;
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 16px;
+    }
+
+    .panel {
+      background: rgba(17, 24, 39, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 16px 60px rgba(0, 0, 0, 0.35);
+    }
+
+    .panel h2 {
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+
+    .panel small {
+      color: var(--muted);
+    }
+
+    label {
+      display: block;
+      color: var(--muted);
+      margin-bottom: 4px;
+      font-size: 13px;
+    }
+
+    select,
+    input,
+    button,
+    textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #0f172a;
+      color: var(--text);
+      font: inherit;
+    }
+
+    textarea {
+      min-height: 220px;
+      resize: vertical;
+    }
+
+    button {
+      background: linear-gradient(120deg, #34d399, #10b981);
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 12px 40px rgba(16, 185, 129, 0.25);
+    }
+
+    button.secondary {
+      background: #0b1326;
+      border: 1px solid var(--border);
+      box-shadow: none;
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .map-wrapper {
+      position: relative;
+    }
+
+    #map {
+      height: 620px;
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .palette {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin: 12px 0 0;
+    }
+
+    .palette-item {
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+      color: var(--text);
+      background: rgba(15, 23, 42, 0.7);
+      cursor: grab;
+      user-select: none;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .palette-item:active {
+      cursor: grabbing;
+    }
+
+    .palette-item:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .chip-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 8px 0 16px;
+    }
+
+    .chip {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #0b1326;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .badge {
+      background: rgba(52, 211, 153, 0.1);
+      border: 1px solid rgba(52, 211, 153, 0.2);
+      color: #a7f3d0;
+      padding: 6px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+    }
+
+    .map-legend {
+      position: absolute;
+      right: 14px;
+      top: 14px;
+      background: rgba(15, 23, 42, 0.85);
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      display: grid;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      z-index: 1000;
+    }
+
+    .map-legend strong {
+      color: var(--text);
+    }
+
+    .helper {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    @media (max-width: 960px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      #map {
+        height: 520px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Open Map Maker</h1>
+      <div class="badges">
+        <span class="badge">Leaflet + Draw</span>
+        <span class="badge">Drag &amp; Drop shapes</span>
+        <span class="badge">Embeddable HTML</span>
+      </div>
+    </div>
+    <div class="pill">
+      <span>Drop tools on the map or use the drawing toolbar</span>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="panel">
+      <h2>Builder</h2>
+      <small>Customize tiles, colors, interactions, and default zoom.</small>
+      <div class="chip-row">
+        <span class="chip">Create: Simple · Advanced · Service area</span>
+        <span class="chip">Draw: Circles · Polygons · Rectangles · Markers</span>
+      </div>
+
+      <label for="mapStyle">Map style</label>
+      <select id="mapStyle">
+        <option value="simple">Simple map maker</option>
+        <option value="advanced">Advanced map maker</option>
+        <option value="service">Service area map</option>
+      </select>
+
+      <div class="controls-grid" style="margin-top: 10px;">
+        <div>
+          <label for="centerLat">Center latitude</label>
+          <input type="number" step="0.0001" id="centerLat" value="37.7749" />
+        </div>
+        <div>
+          <label for="centerLng">Center longitude</label>
+          <input type="number" step="0.0001" id="centerLng" value="-122.4194" />
+        </div>
+      </div>
+
+      <label for="zoom" style="margin-top: 10px;">Zoom (4–18)</label>
+      <input type="range" min="4" max="18" value="12" id="zoom" />
+
+      <div class="controls-grid" style="margin-top: 10px;">
+        <div>
+          <label for="accent">Accent color</label>
+          <input type="color" id="accent" value="#34d399" />
+        </div>
+        <div>
+          <label for="radius">Default radius (m)</label>
+          <input type="number" id="radius" value="500" min="50" step="25" />
+        </div>
+      </div>
+
+      <div class="controls-grid" style="margin-top: 10px;">
+        <div>
+          <label for="fill">Fill opacity</label>
+          <input type="range" id="fill" min="0.1" max="0.9" value="0.35" step="0.05" />
+        </div>
+        <div>
+          <label for="stroke">Stroke weight</label>
+          <input type="number" id="stroke" value="2" min="1" max="8" />
+        </div>
+      </div>
+
+      <label for="description" style="margin-top: 10px;">Optional tooltip text</label>
+      <input type="text" id="description" placeholder="E.g. Headquarters" />
+
+      <div class="chip-row">
+        <span class="chip">Drag tools to the map</span>
+        <span class="chip">or click shapes in the Leaflet toolbar</span>
+      </div>
+
+      <div class="palette">
+        <div class="palette-item" draggable="true" data-type="marker">Multiple Locations</div>
+        <div class="palette-item" draggable="true" data-type="circle">Radius &amp; Circles</div>
+        <div class="palette-item" draggable="true" data-type="polygon">Polygons</div>
+        <div class="palette-item" draggable="true" data-type="rectangle">Rectangles</div>
+      </div>
+
+      <div class="helper">Drag &amp; drop onto the map. You can also edit features via the Leaflet draw toolbar.</div>
+
+      <div style="display: flex; gap: 8px; margin-top: 12px;">
+        <button id="reset" class="secondary" type="button">Clear map</button>
+        <button id="update" type="button">Update embed</button>
+      </div>
+    </aside>
+
+    <main class="panel map-wrapper">
+      <div id="map"></div>
+      <div class="map-legend">
+        <strong>Quick tips</strong>
+        <span>Drag tiles from palette → drop on map</span>
+        <span>Use toolbar to draw/edit/delete</span>
+        <span>Embed snippet updates automatically</span>
+      </div>
+    </main>
+  </div>
+
+  <section class="panel">
+    <h2>Embed code</h2>
+    <small>Copy into custom HTML widgets on platforms like Duda, Squarespace, or Webflow.</small>
+    <textarea id="embed"></textarea>
+    <div style="display: flex; gap: 8px; margin-top: 10px;">
+      <button id="copy" type="button">Copy embed code</button>
+      <button id="download" class="secondary" type="button">Download HTML</button>
+    </div>
+  </section>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-o9N1j7kPZjGQxqhSMF3R3GsiqmNfeK+4U+7qS2m0ims="
+    crossorigin=""
+  ></script>
+  <script
+    src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"
+    integrity="sha256-GE6Y9sFqKc3bUVV+AG/n6CmI8ylGR6adYlrBVQf+em0="
+    crossorigin=""
+  ></script>
+  <script>
+    const mapStyleSelect = document.getElementById('mapStyle');
+    const centerLatInput = document.getElementById('centerLat');
+    const centerLngInput = document.getElementById('centerLng');
+    const zoomInput = document.getElementById('zoom');
+    const accentInput = document.getElementById('accent');
+    const radiusInput = document.getElementById('radius');
+    const fillInput = document.getElementById('fill');
+    const strokeInput = document.getElementById('stroke');
+    const descriptionInput = document.getElementById('description');
+    const embedOutput = document.getElementById('embed');
+    const resetButton = document.getElementById('reset');
+    const updateButton = document.getElementById('update');
+    const copyButton = document.getElementById('copy');
+    const downloadButton = document.getElementById('download');
+
+    const tileLayers = {
+      simple: {
+        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        attribution: '&copy; OpenStreetMap contributors',
+      },
+      advanced: {
+        url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+        attribution: 'Map data: &copy; OpenStreetMap contributors, SRTM | Map style: &copy; OpenTopoMap (CC-BY-SA)',
+      },
+      service: {
+        url: 'https://{s}.tile.stamen.com/toner-lite/{z}/{x}/{y}.png',
+        attribution: 'Map tiles by Stamen Design, under CC BY 3.0. Data &copy; OpenStreetMap contributors',
+      },
+    };
+
+    const map = L.map('map', {
+      zoomControl: true,
+      scrollWheelZoom: true,
+    }).setView([parseFloat(centerLatInput.value), parseFloat(centerLngInput.value)], parseInt(zoomInput.value, 10));
+
+    let baseLayer = L.tileLayer(tileLayers.simple.url, { attribution: tileLayers.simple.attribution }).addTo(map);
+
+    const drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
+
+    const drawControl = new L.Control.Draw({
+      edit: {
+        featureGroup: drawnItems,
+      },
+      draw: {
+        polyline: false,
+        polygon: true,
+        rectangle: true,
+        circle: true,
+        marker: true,
+        circlemarker: false,
+      },
+    });
+    map.addControl(drawControl);
+
+    const paletteItems = document.querySelectorAll('.palette-item');
+    const mapElement = document.getElementById('map');
+
+    paletteItems.forEach((item) => {
+      item.addEventListener('dragstart', (event) => {
+        event.dataTransfer.setData('shape', item.dataset.type);
+      });
+    });
+
+    mapElement.addEventListener('dragover', (event) => {
+      event.preventDefault();
+    });
+
+    mapElement.addEventListener('drop', (event) => {
+      event.preventDefault();
+      const shape = event.dataTransfer.getData('shape');
+      if (!shape) return;
+      const rect = mapElement.getBoundingClientRect();
+      const point = L.point(event.clientX - rect.left, event.clientY - rect.top);
+      const latlng = map.containerPointToLatLng(point);
+      addShape(shape, latlng);
+    });
+
+    function addShape(shape, latlng) {
+      const accent = accentInput.value;
+      const radius = Number(radiusInput.value) || 500;
+      const fillOpacity = Number(fillInput.value) || 0.35;
+      const weight = Number(strokeInput.value) || 2;
+      const tooltip = descriptionInput.value.trim();
+
+      const sharedStyle = { color: accent, weight, fillColor: accent, fillOpacity };
+
+      if (shape === 'marker') {
+        const marker = L.marker(latlng, {
+          icon: L.divIcon({
+            className: 'custom-marker',
+            html: `<div style="width:14px;height:14px;border-radius:999px;background:${accent};box-shadow:0 0 0 6px rgba(52,211,153,0.22);"></div>`,
+            iconSize: [14, 14],
+          }),
+        });
+        if (tooltip) marker.bindTooltip(tooltip, { permanent: false, direction: 'top' });
+        marker.addTo(drawnItems);
+      }
+
+      if (shape === 'circle') {
+        const circle = L.circle(latlng, { ...sharedStyle, radius });
+        if (tooltip) circle.bindTooltip(tooltip, { permanent: false, direction: 'top' });
+        circle.addTo(drawnItems);
+      }
+
+      if (shape === 'rectangle') {
+        const bounds = [
+          [latlng.lat + 0.01, latlng.lng - 0.01],
+          [latlng.lat - 0.01, latlng.lng + 0.01],
+        ];
+        const rectangle = L.rectangle(bounds, sharedStyle);
+        if (tooltip) rectangle.bindTooltip(tooltip, { permanent: false, direction: 'top' });
+        rectangle.addTo(drawnItems);
+      }
+
+      if (shape === 'polygon') {
+        const polygon = L.polygon(
+          [
+            [latlng.lat + 0.01, latlng.lng],
+            [latlng.lat - 0.008, latlng.lng - 0.01],
+            [latlng.lat - 0.01, latlng.lng + 0.012],
+          ],
+          sharedStyle,
+        );
+        if (tooltip) polygon.bindTooltip(tooltip, { permanent: false, direction: 'top' });
+        polygon.addTo(drawnItems);
+      }
+
+      updateEmbedCode();
+    }
+
+    map.on(L.Draw.Event.CREATED, (event) => {
+      const layer = event.layer;
+      applyStyle(layer);
+      drawnItems.addLayer(layer);
+      updateEmbedCode();
+    });
+
+    map.on(L.Draw.Event.EDITED, updateEmbedCode);
+    map.on(L.Draw.Event.DELETED, updateEmbedCode);
+    map.on('zoomend moveend', () => {
+      centerLatInput.value = map.getCenter().lat.toFixed(4);
+      centerLngInput.value = map.getCenter().lng.toFixed(4);
+      zoomInput.value = map.getZoom();
+      updateEmbedCode();
+    });
+
+    function applyStyle(layer) {
+      const accent = accentInput.value;
+      const fillOpacity = Number(fillInput.value) || 0.35;
+      const weight = Number(strokeInput.value) || 2;
+      const tooltip = descriptionInput.value.trim();
+      if (layer.setStyle) {
+        layer.setStyle({ color: accent, fillColor: accent, weight, fillOpacity });
+      }
+      if (layer.getLatLng && !layer.getRadius) {
+        const icon = L.divIcon({
+          className: 'custom-marker',
+          html: `<div style="width:14px;height:14px;border-radius:999px;background:${accent};box-shadow:0 0 0 6px rgba(52,211,153,0.22);"></div>`,
+          iconSize: [14, 14],
+        });
+        layer.setIcon?.(icon);
+      }
+      if (tooltip) {
+        layer.bindTooltip(tooltip, { permanent: false, direction: 'top' });
+      }
+    }
+
+    mapStyleSelect.addEventListener('change', () => {
+      const selected = tileLayers[mapStyleSelect.value];
+      map.removeLayer(baseLayer);
+      baseLayer = L.tileLayer(selected.url, { attribution: selected.attribution });
+      baseLayer.addTo(map);
+      updateEmbedCode();
+    });
+
+    zoomInput.addEventListener('input', () => {
+      map.setZoom(Number(zoomInput.value));
+    });
+
+    [centerLatInput, centerLngInput].forEach((input) => {
+      input.addEventListener('change', () => {
+        map.setView([parseFloat(centerLatInput.value), parseFloat(centerLngInput.value)], map.getZoom());
+        updateEmbedCode();
+      });
+    });
+
+    [accentInput, radiusInput, fillInput, strokeInput, descriptionInput].forEach((input) => {
+      input.addEventListener('change', () => {
+        drawnItems.eachLayer((layer) => applyStyle(layer));
+        updateEmbedCode();
+      });
+    });
+
+    resetButton.addEventListener('click', () => {
+      drawnItems.clearLayers();
+      descriptionInput.value = '';
+      centerLatInput.value = '37.7749';
+      centerLngInput.value = '-122.4194';
+      zoomInput.value = '12';
+      map.setView([37.7749, -122.4194], 12);
+      updateEmbedCode();
+    });
+
+    updateButton.addEventListener('click', updateEmbedCode);
+
+    copyButton.addEventListener('click', () => {
+      navigator.clipboard.writeText(embedOutput.value).then(() => {
+        copyButton.textContent = 'Copied!';
+        setTimeout(() => (copyButton.textContent = 'Copy embed code'), 1200);
+      });
+    });
+
+    downloadButton.addEventListener('click', () => {
+      const blob = new Blob([embedOutput.value], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'map-embed.html';
+      link.click();
+      URL.revokeObjectURL(url);
+    });
+
+    function serializeLayer(layer) {
+      const tooltip = layer.getTooltip ? layer.getTooltip()?.getContent?.() : undefined;
+      if (layer instanceof L.Circle) {
+        return {
+          type: 'Circle',
+          latlng: layer.getLatLng(),
+          radius: layer.getRadius(),
+          options: pickStyle(layer.options),
+          tooltip,
+        };
+      }
+
+      if (layer instanceof L.Rectangle) {
+        return {
+          type: 'Rectangle',
+          latlngs: layer.getLatLngs()[0].map((point) => ({ lat: point.lat, lng: point.lng })),
+          options: pickStyle(layer.options),
+          tooltip,
+        };
+      }
+
+      if (layer instanceof L.Polygon && !(layer instanceof L.Rectangle)) {
+        return {
+          type: 'Polygon',
+          latlngs: layer.getLatLngs()[0].map((point) => ({ lat: point.lat, lng: point.lng })),
+          options: pickStyle(layer.options),
+          tooltip,
+        };
+      }
+
+      if (layer instanceof L.Marker) {
+        return {
+          type: 'Marker',
+          latlng: layer.getLatLng(),
+          options: { color: accentInput.value },
+          tooltip,
+        };
+      }
+
+      return null;
+    }
+
+    function pickStyle(options = {}) {
+      return {
+        color: options.color || accentInput.value,
+        fillColor: options.fillColor || accentInput.value,
+        fillOpacity: options.fillOpacity ?? Number(fillInput.value),
+        weight: options.weight || Number(strokeInput.value),
+      };
+    }
+
+    function updateEmbedCode() {
+      const mapId = `openmap-${Date.now()}`;
+      const center = map.getCenter();
+      const zoom = map.getZoom();
+      const selectedTiles = tileLayers[mapStyleSelect.value];
+      const layers = [];
+
+      drawnItems.eachLayer((layer) => {
+        const serialized = serializeLayer(layer);
+        if (serialized) layers.push(serialized);
+      });
+
+      const embed = `<!-- Open Map Maker embed -->\n<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />\n<div id="${mapId}" style="width:100%;height:420px;border-radius:12px;border:1px solid #e5e7eb;"></div>\n<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>\n<script>(function(){\n  const map = L.map('${mapId}', { scrollWheelZoom: true }).setView([${center.lat.toFixed(4)}, ${center.lng.toFixed(4)}], ${zoom});\n  L.tileLayer('${selectedTiles.url}', { attribution: '${selectedTiles.attribution}' }).addTo(map);\n  const accent = '${accentInput.value}';\n  const layers = ${JSON.stringify(layers)};\n  layers.forEach((layer) => {\n    if (layer.type === 'Marker') {\n      const marker = L.marker(layer.latlng, { icon: L.divIcon({ className: 'custom-marker', html: `<div style\\"width:14px;height:14px;border-radius:999px;background:${accent};box-shadow:0 0 0 6px rgba(52,211,153,0.22);\\"></div>`, iconSize: [14, 14] }) }).addTo(map);\n      if (layer.tooltip) marker.bindTooltip(layer.tooltip, { direction: 'top' });\n    }\n    if (layer.type === 'Circle') {\n      const circle = L.circle(layer.latlng, { ...layer.options, color: layer.options.color || accent, fillColor: layer.options.fillColor || accent, radius: layer.radius }).addTo(map);\n      if (layer.tooltip) circle.bindTooltip(layer.tooltip, { direction: 'top' });\n    }\n    if (layer.type === 'Rectangle') {\n      const rectangle = L.rectangle(layer.latlngs, { ...layer.options, color: layer.options.color || accent, fillColor: layer.options.fillColor || accent }).addTo(map);\n      if (layer.tooltip) rectangle.bindTooltip(layer.tooltip, { direction: 'top' });\n    }\n    if (layer.type === 'Polygon') {\n      const polygon = L.polygon(layer.latlngs, { ...layer.options, color: layer.options.color || accent, fillColor: layer.options.fillColor || accent }).addTo(map);\n      if (layer.tooltip) polygon.bindTooltip(layer.tooltip, { direction: 'top' });\n    }\n  });\n})();<\/script>`;
+
+      embedOutput.value = embed;
+    }
+
+    updateEmbedCode();
+  </script>
+</body>
+</html>
